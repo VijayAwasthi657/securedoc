@@ -66,34 +66,60 @@ function Stat({icon:Icon,label,value,delta,kind='blue'}){return <Card className=
 function Status({children}){return <span className={'status '+children.toLowerCase().replace(' ','-')}><i></i>{children}</span>}
 
 function Login(){
-  const nav=useNavigate(); const [email,setEmail]=useState(''); const [password,setPassword]=useState('');
-  const submit=(e)=>{
-  e.preventDefault();
+  const nav = useNavigate();
+  const [email,setEmail] = useState('');
+  const [password,setPassword] = useState('');
+  const [loading,setLoading] = useState(false);
+  const [error,setError] = useState('');
 
-  const cleanEmail = email.trim().toLowerCase();
+  const submit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
 
-  const name = cleanEmail
-    .split('@')[0]
-    .replace(/[._-]/g,' ')
-    .replace(/\b\w/g,c=>c.toUpperCase());
+    try {
+      const response = await fetch(
+        'https://securedoc-backend-production.up.railway.app/api/auth/login',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: email.trim().toLowerCase(),
+            password: password
+          })
+        }
+      );
 
-  let role = 'Investigator';
-  let department = 'Investigation';
+      const data = await response.json();
 
-  const user = {
-    name,
-    role,
-    email: cleanEmail,
-    department
+      if (!response.ok) {
+        throw new Error(data.message || 'Invalid email or password');
+      }
+
+      const user = {
+        name: data.name,
+        role: data.role,
+        email: data.email,
+        department: data.department || 'Investigation'
+      };
+
+      localStorage.setItem('securedoc_user', JSON.stringify(user));
+      localStorage.setItem('securedoc_auth','1');
+
+      window.location.href='/dashboard';
+
+    } catch (err) {
+      setError(err.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  localStorage.setItem('securedoc_user',JSON.stringify(user));
-  localStorage.setItem('securedoc_auth','1');
-
-  window.location.href='/dashboard';
-};
-  return <div className="auth-shell"><div className="auth-visual"><div className="auth-logo"><div className="brand-icon"><ShieldCheck/></div><div><b>SecureDoc</b><small>Secure Digital Document Management System</small></div></div><div className="auth-copy"><h1>Secure Evidence.<br/>Stronger Justice.</h1><p>A trusted platform for managing legal and investigation documents with end-to-end security, transparency, and AI-powered search.</p></div><div className="auth-shield"><Shield size={150}/></div><div className="auth-tags"><span>Encrypted</span><span>AI Powered</span><span>Audit Ready</span></div></div><div className="auth-form"><div className="auth-form-inner"><h2>Welcome Back</h2><p>Login to your account</p><form onSubmit={submit}><label>Email Address<input value={email} onChange={e=>setEmail(e.target.value)} placeholder="Enter your email" type="email" required/></label><label>Password<div className="input-icon"><input value={password} onChange={e=>setPassword(e.target.value)} placeholder="Enter your password" type="password" required/><Eye size={17}/></div></label><div className="form-row"><label className="check"><input type="checkbox"/> Remember Me</label><button type="button" className="link-btn">Forgot Password?</button></div><button className="primary full"><LogIn size={17}/> Login</button></form><div className="or"><span>OR</span></div><button className="outline full" onClick={()=>nav('/dashboard')}><Fingerprint size={17}/> Login with OTP (MFA)</button><p className="bottom-note">Don't have an account? <button className="link-btn" onClick={()=>nav('/register')}>Register</button></p></div></div></div>
+  return <div className="auth-shell"><div className="auth-visual"><div className="auth-logo"><div className="brand-icon"><ShieldCheck/></div><div><b>SecureDoc</b><small>Secure Digital Document Management System</small></div></div><div className="auth-copy"><h1>Secure Evidence.<br/>Stronger Justice.</h1><p>A trusted platform for managing legal and investigation documents with end-to-end security, transparency, and AI-powered search.</p></div><div className="auth-shield"><Shield size={150}/></div><div className="auth-tags"><span>Encrypted</span><span>AI Powered</span><span>Audit Ready</span></div></div><div className="auth-form"><div className="auth-form-inner"><h2>Welcome Back</h2><p>Login to your account</p>{error && <div style={{color:'#b91c1c',background:'#fee2e2',padding:'10px',borderRadius:'8px',marginBottom:'12px'}}>{error}</div>}<form onSubmit={submit}><label>Email Address<input value={email} onChange={e=>setEmail(e.target.value)} placeholder="Enter your email" type="email" required/></label><label>Password<div className="input-icon"><input value={password} onChange={e=>setPassword(e.target.value)} placeholder="Enter your password" type="password" required/><Eye size={17}/></div></label><div className="form-row"><label className="check"><input type="checkbox"/> Remember Me</label><button type="button" className="link-btn">Forgot Password?</button></div><button className="primary full" type="submit" disabled={loading}><LogIn size={17}/> {loading ? 'Logging in...' : 'Login'}</button></form><div className="or"><span>OR</span></div><button className="outline full" onClick={()=>nav('/dashboard')}><Fingerprint size={17}/> Login with OTP (MFA)</button><p className="bottom-note">Don't have an account? <button className="link-btn" onClick={()=>nav('/register')}>Register</button></p></div></div></div>
 }
+
 
 function Register(){const nav=useNavigate();return <div className="auth-shell"><div className="auth-visual register-visual"><div className="auth-logo"><div className="brand-icon"><ShieldCheck/></div><div><b>SecureDoc</b><small>Secure Digital Document Management System</small></div></div><div className="auth-copy"><h1>Secure Evidence.<br/>Stronger Justice.</h1><p>Join a secure network for legal & investigation services.</p></div><div className="auth-shield"><FileText size={150}/></div><div className="auth-tags"><span>Encrypted</span><span>AI Powered</span><span>Audit Ready</span></div></div><div className="auth-form"><div className="auth-form-inner"><h2>Create your Account</h2><p>Join a secure network for legal & investigation services.</p><form onSubmit={e=>{e.preventDefault();nav('/dashboard')}}><label>Full Name<input placeholder="Enter your full name" required/></label><label>Email Address<input type="email" placeholder="Enter your email" required/></label><label>Phone Number<input placeholder="Enter your phone number"/></label><label>Department<select><option>Select department</option><option>Investigation</option><option>Police</option><option>Forensic</option><option>Legal</option></select></label><label>Password<input type="password" placeholder="Create a strong password" required/></label><button className="primary full"><UserPlus size={17}/> Register</button></form><p className="bottom-note">Already have an account? <button className="link-btn" onClick={()=>nav('/login')}>Login</button></p></div></div></div>}
 
@@ -930,6 +956,7 @@ function Protected(){return localStorage.getItem('securedoc_auth')?<Layout><Rout
 function QRTrackingHome(){const [evidence]=useEvidence();return <><PageTitle eyebrow="VERIFICATION" title="QR Tracking" desc="Generate and test QR links for evidence verification."/><Card><div className="qr-home-grid">{evidence.slice(0,6).map(doc=><div className="qr-card" key={doc.id}><QRCode value={`${window.location.origin}/#/track/${doc.id}`} size={110}/><div><b>{doc.id}</b><p>{doc.title}</p><Status>{doc.status}</Status><NavLink className="link-btn" to={`/track/${doc.id}`}>Open tracking</NavLink></div></div>)}</div></Card></>}
 function App(){return <Routes><Route path="/login" element={<Login/>}/><Route path="/register" element={<Register/>}/><Route path="/track/:id" element={<QRTracking/>}/><Route path="/*" element={<Protected/>}/></Routes>}
 createRoot(document.getElementById('root')).render(<BrowserRouter><App/></BrowserRouter>);
+
 
 
 

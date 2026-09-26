@@ -16,7 +16,6 @@ public class AuthController {
         this.userService = userService;
     }
 
-    // Temporary test endpoint
     @GetMapping("/test")
     public String test() {
         return "AUTH WORKING";
@@ -37,9 +36,25 @@ public class AuthController {
         return ResponseEntity.ok(savedUser);
     }
 
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+
+        User user = userService.login(
+                request.email(),
+                request.password()
+        );
+
+        return ResponseEntity.ok(user);
+    }
+
     public record RegisterRequest(
             String userId,
             String name,
+            String email,
+            String password
+    ) {}
+
+    public record LoginRequest(
             String email,
             String password
     ) {}
