@@ -1,5 +1,7 @@
 package com.securedoc.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -60,6 +62,7 @@ public class User {
         this.email = email;
     }
 
+    @JsonIgnore
     public String getPasswordHash() {
         return passwordHash;
     }
@@ -84,3 +87,5 @@ public class User {
         this.createdAt = createdAt;
     }
 }
+
+
