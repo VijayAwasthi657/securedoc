@@ -39,12 +39,19 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
 
-        User user = userService.login(
-                request.email(),
-                request.password()
-        );
+        try {
+            User user = userService.login(
+                    request.email(),
+                    request.password()
+            );
 
-        return ResponseEntity.ok(user);
+            return ResponseEntity.ok(user);
+
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(401)
+                    .body("{\"message\":\"" + e.getMessage() + "\"}");
+        }
     }
 
     public record RegisterRequest(
